@@ -1,10 +1,13 @@
-version: '3.8'  # Версия Docker Compose
-
+version: '3'
 services:
-  frontend:
-    build:
-      context: .  # Билдим образ из текущей директории
-      dockerfile: Dockerfile  # Используем твой Dockerfile
+  react-app:
+    build: .
     ports:
-      - "80:80"  # Пробрасываем порт (80 хоста -> 80 контейнера)
-    restart: always  # Перезапуск при сбоях
+      - '3005:80' # Контейнер работает на 3005-м порту, но внутри все так же на 80-м
+    restart: always
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    external: true

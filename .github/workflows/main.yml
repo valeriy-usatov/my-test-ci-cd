@@ -41,7 +41,7 @@ jobs:
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: test.valeriy-usatov.com
-          username: your-username
+          username: valeriy-usatov
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /path/to/project
