@@ -1,0 +1,10 @@
+version: '3.8'  # Версия Docker Compose
+
+services:
+  frontend:
+    build:
+      context: .  # Билдим образ из текущей директории
+      dockerfile: Dockerfile  # Используем твой Dockerfile
+    ports:
+      - "80:80"  # Пробрасываем порт (80 хоста -> 80 контейнера)
+    restart: always  # Перезапуск при сбоях
