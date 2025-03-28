@@ -40,10 +40,11 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: test.valeriy-usatov.com
+          host: valeriy-usatov.com
           username: valeriy-usatov
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /path/to/project
             git pull origin main
+            docker network create my_network || true  # Создаем сеть, если ее нет
             docker-compose up --build -d
