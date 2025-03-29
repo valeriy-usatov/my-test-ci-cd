@@ -37,12 +37,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Add logging for the current directory and list of files
+      # Добавьте логирование для отладки
       - name: Print current directory and list files
         run: |
           pwd
           ls -la
 
+      # Проверяем, что docker-compose.yml существует в репозитории
       - name: Check if docker-compose.yml exists
         run: |
           if [ -f "docker-compose.yml" ]; then
@@ -51,13 +52,7 @@ jobs:
             echo "docker-compose.yml not found" && exit 1
           fi
 
-      # Additional logs for Docker container status
-      - name: Check Docker version
-        run: docker --version
-
-      - name: Check Docker Compose version
-        run: docker-compose --version
-
+      # Подключаемся к серверу через SSH и выполняем команды
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -65,18 +60,17 @@ jobs:
           username: valeriy-usatov
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # Подключаемся к серверу и выполняем деплой
             echo "Переходим в каталог проекта"
             cd /path/to/project
             echo "Делаем git pull"
             git pull origin main
-            echo "Создаем сеть Docker (если еще не существует)"
-            docker network create my_network || true
             echo "Запускаем docker-compose"
             docker-compose up --build -d
             echo "Деплой завершен"
 
-      # Check Docker container status
+      # Проверяем статус контейнеров после деплоя
       - name: Check Docker container status
         run: |
-          docker-compose ps
-          docker-compose logs
+          ssh -i ${{ secrets.SSH_PRIVATE_KEY }} valeriy-usatov@valeriy-usatov.com "docker-compose ps"
+          ssh -i ${{ secrets.SSH_PRIVATE_KEY }} valeriy-usatov@valeriy-usatov.com "docker-compose logs"
