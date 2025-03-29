@@ -37,6 +37,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Add logging for the current directory and list of files
+      - name: Print current directory and list files
+        run: |
+          pwd
+          ls -la
+
+      - name: Check if docker-compose.yml exists
+        run: |
+          if [ -f "docker-compose.yml" ]; then
+            echo "docker-compose.yml found"
+          else
+            echo "docker-compose.yml not found" && exit 1
+          fi
+
+      # Additional logs for Docker container status
+      - name: Check Docker version
+        run: docker --version
+
+      - name: Check Docker Compose version
+        run: docker-compose --version
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -44,7 +65,18 @@ jobs:
           username: valeriy-usatov
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            echo "Переходим в каталог проекта"
             cd /path/to/project
+            echo "Делаем git pull"
             git pull origin main
-            docker network create my_network || true  # Создаем сеть, если ее нет
+            echo "Создаем сеть Docker (если еще не существует)"
+            docker network create my_network || true
+            echo "Запускаем docker-compose"
             docker-compose up --build -d
+            echo "Деплой завершен"
+
+      # Check Docker container status
+      - name: Check Docker container status
+        run: |
+          docker-compose ps
+          docker-compose logs
