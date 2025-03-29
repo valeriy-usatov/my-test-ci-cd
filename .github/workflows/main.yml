@@ -57,7 +57,7 @@ jobs:
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: valeriy-usatov.com
-          username: valeriy-usatov
+          username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             # Подключаемся к серверу и выполняем деплой
