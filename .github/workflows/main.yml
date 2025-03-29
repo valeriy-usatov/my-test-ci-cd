@@ -62,7 +62,7 @@ jobs:
           script: |
             # Подключаемся к серверу и выполняем деплой
             echo "Переходим в каталог проекта"
-            cd /path/to/project
+            cd /var/www/mywebsite/my-test-cicd
             echo "Делаем git pull"
             git pull origin main
             echo "Запускаем docker-compose"
@@ -72,5 +72,5 @@ jobs:
       # Проверяем статус контейнеров после деплоя
       - name: Check Docker container status
         run: |
-          ssh -i ${{ secrets.SSH_PRIVATE_KEY }} valeriy-usatov@valeriy-usatov.com "docker-compose ps"
-          ssh -i ${{ secrets.SSH_PRIVATE_KEY }} valeriy-usatov@valeriy-usatov.com "docker-compose logs"
+          ssh -i ${{ secrets.SSH_PRIVATE_KEY }} root@88.218.168.129 "docker-compose ps"
+          ssh -i ${{ secrets.SSH_PRIVATE_KEY }} root@88.218.168.129 "docker-compose logs"
