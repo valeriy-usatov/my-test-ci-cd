@@ -1,29 +1,76 @@
-deploy:
-  name: Deploy to Server
-  needs: test
-  runs-on: ubuntu-latest
+name: CI/CD Pipeline
 
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
-    - name: Print environment variables (for debugging)
-      run: |
-        echo "GITHUB_ACTOR: $GITHUB_ACTOR"
-        echo "GITHUB_REPOSITORY: $GITHUB_REPOSITORY"
-        echo "GITHUB_SHA: $GITHUB_SHA"
-        echo "HOST: ${{ secrets.HOST }}"
-        echo "USERNAME: ${{ secrets.SSH_USERNAME }}"
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
 
-    - name: Deploy via SSH
-      uses: appleboy/ssh-action@v0.1.7
-      with:
-        host: 88.218.168.129
-        username: root
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          echo "SSH connection test"
-          cd /path/to/project
-          git pull origin main
-          docker network create my_network || true
-          docker-compose up --build -d
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test -- --watchAll=false
+
+  deploy:
+    name: Deploy to Server
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Добавьте логирование для отладки
+      - name: Print current directory and list files
+        run: |
+          pwd
+          ls -la
+
+      # Проверяем, что docker-compose.yml существует в репозитории
+      - name: Check if docker-compose.yml exists
+        run: |
+          if [ -f "docker-compose.yml" ]; then
+            echo "docker-compose.yml found"
+          else
+            echo "docker-compose.yml not found" && exit 1
+          fi
+
+      # Подключаемся к серверу через SSH и выполняем команды
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: 88.218.168.129
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Подключаемся к серверу и выполняем деплой
+            echo "Переходим в каталог проекта"
+            cd /path/to/project
+            echo "Делаем git pull"
+            git pull origin main
+            echo "Запускаем docker-compose"
+            docker-compose up --build -d
+            echo "Деплой завершен"
+
+      # Проверяем статус контейнеров после деплоя
+      - name: Check Docker container status
+        run: |
+          ssh -i ${{ secrets.SSH_PRIVATE_KEY }} valeriy-usatov@valeriy-usatov.com "docker-compose ps"
+          ssh -i ${{ secrets.SSH_PRIVATE_KEY }} valeriy-usatov@valeriy-usatov.com "docker-compose logs"
