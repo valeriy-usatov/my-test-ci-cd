@@ -6,7 +6,7 @@ function App() {
 
   return (
     <>
-      <h1>Hello world</h1>
+      <h1>Hello world!!</h1>
       <p>My test CI/CD</p>
       <p>Counter: {count}</p>
       <button onClick={() => setCount(count + 1)}>Increment</button>
