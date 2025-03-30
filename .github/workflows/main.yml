@@ -71,8 +71,14 @@ jobs:
 
       # Проверяем статус контейнеров после деплоя
       - name: Check Docker container status
-        run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key.pem
-          chmod 600 private_key.pem
-          ssh -o StrictHostKeyChecking=no -i private_key.pem root@88.218.168.129 "docker-compose ps"
-          ssh -o StrictHostKeyChecking=no -i private_key.pem root@88.218.168.129 "docker-compose logs"
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: 88.218.168.129
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/mywebsite/my-test-cicd || { echo "Folder not found!"; exit 1; }
+            echo "Successfully entered directory"
+            ls -la  # Проверим, что в папке есть файлы
+            docker-compose ps
+            docker-compose logs
