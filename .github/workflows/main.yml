@@ -71,6 +71,7 @@ jobs:
 
       # Проверяем статус контейнеров после деплоя
       - name: Check Docker container status
+        working-directory: /var/www/mywebsite/my-test-cicd
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key.pem
           chmod 600 private_key.pem
