@@ -63,7 +63,7 @@ jobs:
             echo "Переходим в каталог проекта"
             cd /var/www/mywebsite/my-test-cicd || exit 1
             echo "Делаем git pull"
-            git pull origin main
+            git pull origin master
 
             echo "Останавливаем и удаляем старые контейнеры"
             docker-compose down
