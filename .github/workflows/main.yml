@@ -53,21 +53,28 @@ jobs:
           fi
 
       # Подключаемся к серверу через SSH и выполняем команды
-            - name: Deploy via SSH
-            uses: appleboy/ssh-action@v0.1.7
-            with:
-              host: 88.218.168.129
-              username: root
-              key: ${{ secrets.SSH_PRIVATE_KEY }}
-              script: |
-                cd /var/www/mywebsite/my-test-cicd || exit 1
-                echo "Сбрасываем изменения, если они есть"
-                git reset --hard
-                echo "Делаем git pull"
-                git pull origin master
-                echo "Перезапускаем контейнеры"
-                docker-compose up --build -d
-                echo "Деплой завершен"
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: 88.218.168.129
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "Переходим в каталог проекта"
+            cd /var/www/mywebsite/my-test-cicd || exit 1
+            echo "Делаем git pull"
+            git pull origin master
+
+            echo "Останавливаем и удаляем старые контейнеры"
+            docker-compose down
+
+            echo "Удаляем старые образы"
+            docker system prune -af
+
+            echo "Пересобираем и запускаем контейнеры"
+            docker-compose up --build -d
+
+            echo "Деплой завершен"
 
       # Проверяем статус контейнеров после деплоя
       - name: Check Docker container status
