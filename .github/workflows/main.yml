@@ -3,7 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - master
+      - master # или main, если ты используешь другую ветку
   pull_request:
     branches:
       - master
@@ -37,13 +37,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Добавьте логирование для отладки
+      # Логирование текущей директории для отладки
       - name: Print current directory and list files
         run: |
           pwd
           ls -la
 
-      # Проверяем, что docker-compose.yml существует в репозитории
+      # Проверка наличия docker-compose.yml
       - name: Check if docker-compose.yml exists
         run: |
           if [ -f "docker-compose.yml" ]; then
@@ -52,7 +52,7 @@ jobs:
             echo "docker-compose.yml not found" && exit 1
           fi
 
-      # Подключаемся к серверу через SSH и выполняем команды
+      # Подключение к серверу через SSH и деплой
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -63,7 +63,7 @@ jobs:
             echo "Переходим в каталог проекта"
             cd /var/www/mywebsite/my-test-cicd || exit 1
             echo "Делаем git pull"
-            git pull origin master
+            git pull origin master  # Если ты используешь другую ветку, подставь нужное имя
 
             echo "Останавливаем и удаляем старые контейнеры"
             docker-compose down
@@ -76,7 +76,7 @@ jobs:
 
             echo "Деплой завершен"
 
-      # Проверяем статус контейнеров после деплоя
+      # Проверка статуса контейнеров
       - name: Check Docker container status
         uses: appleboy/ssh-action@v0.1.7
         with:
