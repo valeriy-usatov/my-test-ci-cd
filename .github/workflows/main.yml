@@ -3,7 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - master # или main, если ты используешь другую ветку
+      - master
   pull_request:
     branches:
       - master
@@ -62,8 +62,13 @@ jobs:
           script: |
             echo "Переходим в каталог проекта"
             cd /var/www/mywebsite/my-test-cicd || exit 1
-            echo "Делаем git pull"
-            git pull origin master  # Если ты используешь другую ветку, подставь нужное имя
+
+            echo "Выводим текущий коммит перед обновлением"
+            git rev-parse HEAD
+
+            echo "Сбрасываем все изменения и обновляем код"
+            git fetch origin
+            git reset --hard origin/master
 
             echo "Останавливаем и удаляем старые контейнеры"
             docker-compose down
