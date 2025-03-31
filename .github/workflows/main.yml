@@ -11,7 +11,7 @@ on:
 jobs:
   test:
     name: Run Tests
-    runs-on: ubuntu-latest 
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -60,13 +60,20 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Подключаемся к серверу и выполняем деплой
             echo "Переходим в каталог проекта"
             cd /var/www/mywebsite/my-test-cicd || exit 1
             echo "Делаем git pull"
             git pull origin main
-            echo "Запускаем docker-compose"
+
+            echo "Останавливаем и удаляем старые контейнеры"
+            docker-compose down
+
+            echo "Удаляем старые образы"
+            docker system prune -af
+
+            echo "Пересобираем и запускаем контейнеры"
             docker-compose up --build -d
+
             echo "Деплой завершен"
 
       # Проверяем статус контейнеров после деплоя
