@@ -37,13 +37,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Отладка: Проверяем директорию и файлы
-      - name: Print current directory and list files
-        run: |
-          pwd
-          ls -la
-
-      # Проверяем, что docker-compose.yml существует в репозитории
+      # Проверка существования docker-compose.yml
       - name: Check if docker-compose.yml exists
         run: |
           if [ -f "docker-compose.yml" ]; then
@@ -52,7 +46,7 @@ jobs:
             echo "docker-compose.yml not found" && exit 1
           fi
 
-      # Подключаемся к серверу через SSH и выполняем команды
+      # Подключаемся к серверу через SSH и выполняем деплой
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -60,22 +54,22 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            echo "Настраиваем SSH-агент"
+            eval "$(ssh-agent -s)"
+            ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+
+            echo "Проверяем SSH-доступ"
+            ssh -T git@github.com
+
             echo "Переходим в каталог проекта"
             cd /var/www/mywebsite/my-test-cicd || exit 1
 
-            echo "Настраиваем SSH-агент для GitHub"
-            eval "$(ssh-agent -s)"
-            ssh-add ~/.ssh/id_rsa
-
-            echo "Кто выполняет команду?"
-            whoami
-
-            echo "Обновляем код с GitHub"
-            git reset --hard  # Сбрасываем все изменения
-            git clean -fd      # Удаляем лишние файлы
+            echo "Сбрасываем изменения и обновляем код"
+            git reset --hard
+            git clean -fd
             git pull git@github.com:valeriy-usatov/my-test-ci-cd.git master
 
-            echo "Останавливаем и удаляем старые контейнеры"
+            echo "Останавливаем старые контейнеры"
             docker-compose down
 
             echo "Удаляем старые образы"
