@@ -3,7 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - master # или main, если ты используешь другую ветку
+      - master
   pull_request:
     branches:
       - master
@@ -29,45 +29,73 @@ jobs:
         run: npm test -- --watchAll=false
 
   deploy:
-  name: Deploy to Server
-  needs: test
-  runs-on: ubuntu-latest
+    name: Deploy to Server
+    needs: test
+    runs-on: ubuntu-latest
 
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan github.com >> ~/.ssh/known_hosts
+      # Отладка: Проверяем директорию и файлы
+      - name: Print current directory and list files
+        run: |
+          pwd
+          ls -la
 
-    - name: Deploy via SSH
-      uses: appleboy/ssh-action@v0.1.7
-      with:
-        host: 88.218.168.129
-        username: root
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          echo "Переходим в каталог проекта"
-          cd /var/www/mywebsite/my-test-cicd || exit 1
+      # Проверяем, что docker-compose.yml существует в репозитории
+      - name: Check if docker-compose.yml exists
+        run: |
+          if [ -f "docker-compose.yml" ]; then
+            echo "docker-compose.yml found"
+          else
+            echo "docker-compose.yml not found" && exit 1
+          fi
 
-          echo "Выводим текущий коммит перед обновлением"
-          git rev-parse HEAD
+      # Подключаемся к серверу через SSH и выполняем команды
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: 88.218.168.129
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "Переходим в каталог проекта"
+            cd /var/www/mywebsite/my-test-cicd || exit 1
 
-          echo "Сбрасываем все изменения и обновляем код"
-          git reset --hard HEAD
-          git pull origin master
+            echo "Настраиваем SSH-агент для GitHub"
+            eval "$(ssh-agent -s)"
+            ssh-add ~/.ssh/id_rsa
 
-          echo "Останавливаем и удаляем старые контейнеры"
-          docker-compose down
+            echo "Кто выполняет команду?"
+            whoami
 
-          echo "Удаляем старые образы"
-          docker system prune -af
+            echo "Обновляем код с GitHub"
+            git reset --hard  # Сбрасываем все изменения
+            git clean -fd      # Удаляем лишние файлы
+            git pull git@github.com:valeriy-usatov/my-test-ci-cd.git master
 
-          echo "Пересобираем и запускаем контейнеры"
-          docker-compose up --build -d
+            echo "Останавливаем и удаляем старые контейнеры"
+            docker-compose down
 
-          echo "Деплой завершен"
+            echo "Удаляем старые образы"
+            docker system prune -af
+
+            echo "Пересобираем и запускаем контейнеры"
+            docker-compose up --build -d
+
+            echo "Деплой завершен"
+
+      # Проверяем статус контейнеров после деплоя
+      - name: Check Docker container status
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: 88.218.168.129
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/mywebsite/my-test-cicd || { echo "Folder not found!"; exit 1; }
+            echo "Successfully entered directory"
+            ls -la  # Проверим, что в папке есть файлы
+            docker-compose ps
+            docker-compose logs
